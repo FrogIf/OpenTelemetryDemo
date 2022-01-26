@@ -1,0 +1,14 @@
+server:
+  port: 9091
+
+spring:
+  application:
+    name: DemoA
+
+jaeger:
+  collector:
+    address: http://localhost:14250
+
+frog:
+  appb:
+    address: http://localhost:9092
