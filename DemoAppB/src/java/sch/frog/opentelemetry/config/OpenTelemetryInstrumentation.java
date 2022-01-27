@@ -7,10 +7,11 @@ import io.opentelemetry.context.Scope;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapSetter;
 import io.opentelemetry.semconv.trace.attributes.SemanticAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +25,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,6 +35,8 @@ import java.util.HashSet;
 
 @Configuration
 public class OpenTelemetryInstrumentation implements BeanPostProcessor {
+
+    private static final Logger logger = LoggerFactory.getLogger(OpenTelemetryInstrumentation.class);
 
     @Autowired
     private OpenTelemetryEnv openTelemetryEnv;
@@ -51,19 +53,22 @@ public class OpenTelemetryInstrumentation implements BeanPostProcessor {
 
                     Span parent = Span.current();
                     Span currentSpan = openTelemetryEnv.getTracer().spanBuilder(uri.toString()).setSpanKind(SpanKind.CLIENT).setParent(Context.current().with(parent)).startSpan();
-                    currentSpan.setAttribute("path", uri.getPath());
-                    currentSpan.setAttribute("method", method == null ? "unknown" : method.name());
-
-                    openTelemetryEnv.getOpenTelemetry().getPropagators().getTextMapPropagator().inject(Context.current(), request.getHeaders(), new TextMapSetter<>() {
-                        @Override
-                        public void set(HttpHeaders carrier, String key, String value) {
-                            carrier.add(key, value);
-                        }
-                    });
 
                     try(
                             Scope scope = currentSpan.makeCurrent()
                     ){
+                        try{
+                            currentSpan.setAttribute("path", uri.getPath());
+                            currentSpan.setAttribute("method", method == null ? "unknown" : method.name());
+                            openTelemetryEnv.getOpenTelemetry().getPropagators().getTextMapPropagator().inject(Context.current(), request.getHeaders(), new TextMapSetter<>() {
+                                @Override
+                                public void set(HttpHeaders carrier, String key, String value) {
+                                    carrier.add(key, value);
+                                }
+                            });
+                        }catch (Exception e){
+                            logger.warn("context inject failed.", e);
+                        }
                         return execution.execute(request, body);
                     }finally{
                         currentSpan.end();
