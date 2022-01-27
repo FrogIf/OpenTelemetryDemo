@@ -15,6 +15,7 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -22,7 +23,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class OpenTelemetryEnv {
+@ConditionalOnProperty(value = "frog.opentelemetry.enable", havingValue = "true", matchIfMissing = true)
+public class OpenTelemetryEnv implements IOpenTelemetryOperator{
 
     @Value("${spring.application.name}")
     private String appName;
@@ -69,6 +71,7 @@ public class OpenTelemetryEnv {
         return openTelemetry;
     }
 
+    @Override
     public void event(String name, Map<String, String> attributes){
         Span current = Span.current();
         AttributesBuilder builder = Attributes.builder();

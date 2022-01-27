@@ -1,0 +1,3 @@
+[submodule "OpenTelemetryTracePublisher/otel-proto"]
+	path = OpenTelemetryTracePublisher/otel-proto
+	url = https://github.com/open-telemetry/opentelemetry-proto.git

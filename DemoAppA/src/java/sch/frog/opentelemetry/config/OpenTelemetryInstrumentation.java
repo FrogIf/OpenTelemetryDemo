@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +37,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 
 @Configuration
+@ConditionalOnProperty(value = "frog.opentelemetry.enable", havingValue = "true", matchIfMissing = true)
 public class OpenTelemetryInstrumentation implements BeanPostProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(OpenTelemetryInstrumentation.class);

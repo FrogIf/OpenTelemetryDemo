@@ -18,3 +18,7 @@ spring:
 jaeger:
   collector:
     address: http://localhost:14250
+
+frog:
+  opentelemetry:
+    enable: false
