@@ -6,9 +6,9 @@
     </appender>
 
     <appender name="rollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/demo-b.log</file>
+        <file>logs/normal-app.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/demo-b.%d{yyyy-MM-dd}.bak</fileNamePattern>
+            <fileNamePattern>logs/normal-app.%d{yyyy-MM-dd}.bak</fileNamePattern>
         </rollingPolicy>
         <encoder charset="UTF-8">
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{80} - %msg%n</pattern>
