@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import sch.frog.opentelemetry.config.OpenTelemetryEnv;
 import sch.frog.opentelemetry.service.HelloService;
+
+import java.util.HashMap;
 
 @RestController
 public class HelloController {
@@ -24,11 +27,18 @@ public class HelloController {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private OpenTelemetryEnv openTelemetryEnv;
     
     @RequestMapping("/hello")
     public String hello(){
         String hello = helloService.hello();
         logger.info("service return : {}", hello);
+        openTelemetryEnv.event("hello return", new HashMap<>(){{
+            put("result", hello);
+        }});
+
         String url = appBAddress + "/hello";
         ResponseEntity<String> res = restTemplate.getForEntity(url, String.class);
         logger.info("call app b , url : {}, response : {}", url, res.getBody());

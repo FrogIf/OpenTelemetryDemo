@@ -1,7 +1,9 @@
 package sch.frog.opentelemetry.config;
 
+import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import io.opentelemetry.context.propagation.TextMapGetter;
@@ -21,8 +23,8 @@ import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -99,6 +101,7 @@ public class OpenTelemetryInstrumentation implements BeanPostProcessor {
 
         private final ThreadLocal<WebInputTraceInfo> traceInfoHolder = new ThreadLocal<>();
 
+        @Override
         public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
             traceInfoHolder.remove();
             Context extractedContext = OpenTelemetryInstrumentation.this.openTelemetryEnv.getOpenTelemetry().getPropagators().getTextMapPropagator()
@@ -125,18 +128,29 @@ public class OpenTelemetryInstrumentation implements BeanPostProcessor {
                     .setParent(extractedContext)
                     .startSpan();
             webInputTraceInfo.scope = webInputTraceInfo.span.makeCurrent();
-            webInputTraceInfo.span.setAttribute(SemanticAttributes.HTTP_METHOD, request.getMethod());
-            webInputTraceInfo.span.setAttribute(SemanticAttributes.HTTP_SCHEME, request.getScheme());
-            webInputTraceInfo.span.setAttribute(SemanticAttributes.HTTP_CLIENT_IP, request.getRemoteHost());
-            webInputTraceInfo.span.setAttribute(SemanticAttributes.HTTP_URL, request.getRequestURI());
+            Attributes attributes = Attributes.of(
+                    SemanticAttributes.HTTP_METHOD, request.getMethod(),
+                    SemanticAttributes.HTTP_SCHEME, request.getScheme(),
+                    SemanticAttributes.HTTP_CLIENT_IP, request.getRemoteHost(),
+                    SemanticAttributes.HTTP_URL, request.getRequestURI()
+            );
+            webInputTraceInfo.span.setAllAttributes(attributes);
+
             traceInfoHolder.set(webInputTraceInfo);
 
             return true;
         }
 
+
+
         @Override
-        public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
+                                    @Nullable Exception ex) throws Exception {
             WebInputTraceInfo webInputTraceInfo = traceInfoHolder.get();
+            if(ex != null){
+                webInputTraceInfo.span.recordException(ex);
+                webInputTraceInfo.span.setStatus(StatusCode.ERROR);
+            }
             try{
                 try{
                     webInputTraceInfo.span.end();

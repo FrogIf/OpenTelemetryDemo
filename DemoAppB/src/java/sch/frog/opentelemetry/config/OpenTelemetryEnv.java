@@ -2,6 +2,8 @@ package sch.frog.opentelemetry.config;
 
 import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
+import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -64,5 +67,14 @@ public class OpenTelemetryEnv {
 
     public OpenTelemetrySdk getOpenTelemetry() {
         return openTelemetry;
+    }
+
+    public void event(String name, Map<String, String> attributes){
+        Span current = Span.current();
+        AttributesBuilder builder = Attributes.builder();
+        for (Map.Entry<String, String> entry : attributes.entrySet()) {
+            builder.put(entry.getKey(), entry.getValue());
+        }
+        current.addEvent(name, builder.build());
     }
 }

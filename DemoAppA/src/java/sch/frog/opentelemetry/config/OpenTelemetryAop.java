@@ -1,6 +1,7 @@
 package sch.frog.opentelemetry.config;
 
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -37,6 +38,10 @@ public class OpenTelemetryAop {
             Scope scope = currentSpan.makeCurrent()
         ){
             return pjp.proceed();
+        }catch(Throwable t){
+            currentSpan.recordException(t);
+            currentSpan.setStatus(StatusCode.ERROR);
+            throw t;
         }finally{
             currentSpan.end();
         }
