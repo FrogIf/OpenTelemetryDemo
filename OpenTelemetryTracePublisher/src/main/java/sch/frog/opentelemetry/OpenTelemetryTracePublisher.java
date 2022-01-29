@@ -5,10 +5,7 @@ import org.slf4j.LoggerFactory;
 import sch.frog.opentelemetry.app.ThreadInfo;
 import sch.frog.opentelemetry.build.TraceDataBuilder;
 import sch.frog.opentelemetry.config.GlobalConfiguration;
-import sch.frog.opentelemetry.data.CodeInstrumentationData;
-import sch.frog.opentelemetry.data.DatabaseInstrumentationData;
-import sch.frog.opentelemetry.data.HttpInstrumentationData;
-import sch.frog.opentelemetry.data.InstrumentationData;
+import sch.frog.opentelemetry.data.*;
 import sch.frog.opentelemetry.service.TracePublisher;
 import sch.frog.opentelemetry.trace.ApplicationTrace;
 import sch.frog.opentelemetry.util.NanoDuration;
@@ -104,6 +101,18 @@ public class OpenTelemetryTracePublisher {
                 .setClassName("sch.frog.ppp.Controller")
                 .setStartOffset(NanoDuration.ofMillis(0))
                 .setEndOffset(NanoDuration.ofMillis(10))
+                .call(CodeInstrumentationData.Builder.newBuilder()
+                        .setThreadInfo(threadInfo)
+                        .setMethod("triggerError")
+                        .setClassName("sch.frog.ppp.Service")
+                        .setStartOffset(NanoDuration.ofMillis(1))
+                        .setEndOffset(NanoDuration.ofMillis(8))
+                        .setExceptionData(ExceptionData.Builder.newBuilder()
+                                .setExceptionMsg("failed to execute method")
+                                .setExceptionStackTrace("org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:205)\\r\\n\\tat org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:150)\\r\\n\\tat org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117)\\r\\n\\tat org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:895)\\r\\n\\tat org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:808)\\r\\n\\tat org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)\\r\\n\\tat org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1067)\\r\\n\\tat org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:963)\\r\\n\\tat org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006)\\r\\n\\tat org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:898)\\r\\n\\tat javax.servlet.http.HttpServlet.service(HttpServlet.java:655)\\r\\n\\tat org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883)\\r\\n\\tat javax.servlet.http.HttpServlet.service(HttpServlet.java:764)\\r\\n\\tat ")
+                                .setExceptionType("org.springframework.web.client.ResourceAccessException")
+                                .build())
+                        .build())
                 .build();
 
         return ApplicationTrace.Builder.newBuilder()

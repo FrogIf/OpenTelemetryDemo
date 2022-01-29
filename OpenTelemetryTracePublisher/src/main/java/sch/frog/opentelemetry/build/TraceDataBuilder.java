@@ -78,7 +78,7 @@ public class TraceDataBuilder {
         InstrumentationLibrarySpans librarySpans = InstrumentationLibrarySpans.newBuilder()
                 .addAllSpans(spans)
                 .setInstrumentationLibrary(instrumentationLibrary)
-                .setSchemaUrl(schemaUrl)
+                .setSchemaUrl(schemaUrl == null ? "" : schemaUrl)
                 .build();
 
         builder.addInstrumentationLibrarySpans(librarySpans);

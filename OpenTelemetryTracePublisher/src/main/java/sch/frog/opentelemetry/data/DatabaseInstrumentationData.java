@@ -1,6 +1,5 @@
 package sch.frog.opentelemetry.data;
 
-import com.google.protobuf.ByteString;
 import io.opentelemetry.proto.common.v1.InstrumentationLibrary;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.trace.v1.Span;
@@ -11,7 +10,6 @@ import sch.frog.opentelemetry.util.OpenTelemetryProtoUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class DatabaseInstrumentationData extends AbstractInstrumentationData{
 
@@ -40,21 +38,13 @@ public class DatabaseInstrumentationData extends AbstractInstrumentationData{
     }
 
     @Override
-    public void build(ApplicationTrace applicationTrace, String parentSpanId, TraceDataBuilder builder) {
-        String spanId = OpenTelemetryProtoUtil.genSpanId();
-        long startNanoTime = builder.getStartNanoTime(applicationTrace);
-        Span span = Span.newBuilder()
-                .setSpanId(ByteString.copyFrom(OpenTelemetryProtoUtil.hexIdToBytes(spanId)))
-                .setKind(Span.SpanKind.SPAN_KIND_CLIENT)
-                .setTraceId(ByteString.copyFrom(OpenTelemetryProtoUtil.hexIdToBytes(builder.getTraceId())))
-                .setName(getName())
-                .addAllAttributes(this.getAttributes())
-                .setStartTimeUnixNano(startNanoTime + this.getStartOffset())
-                .setEndTimeUnixNano(startNanoTime + this.getEndOffset())
-                .setParentSpanId(ByteString.copyFrom(OpenTelemetryProtoUtil.hexIdToBytes(parentSpanId)))
-                .build();
+    protected String mainSpanName() {
+        return getName();
+    }
 
-        builder.build(applicationTrace, List.of(span), InstrumentationLibrary.newBuilder().setName("").setVersion("").build(), "");
+    @Override
+    protected Span.SpanKind mainSpanKind(ApplicationTrace applicationTrace, String parentSpanId, TraceDataBuilder builder) {
+        return Span.SpanKind.SPAN_KIND_CLIENT;
     }
 
     public Collection<KeyValue> getAttributes(){
@@ -65,6 +55,11 @@ public class DatabaseInstrumentationData extends AbstractInstrumentationData{
         CollectionUtil.addIfNotNull(attrs,OpenTelemetryProtoUtil.build(DB_STATEMENT, this.sql));
         CollectionUtil.addIfNotNull(attrs,OpenTelemetryProtoUtil.build(DB_SYSTEM, this.dbSystem));
         return attrs;
+    }
+
+    @Override
+    protected InstrumentationLibrary getInstrumentationLibrary() {
+        return InstrumentationLibrary.newBuilder().setName("").setVersion("").build();
     }
 
     private String getName(){

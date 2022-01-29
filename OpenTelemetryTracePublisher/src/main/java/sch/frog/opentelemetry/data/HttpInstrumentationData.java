@@ -1,6 +1,5 @@
 package sch.frog.opentelemetry.data;
 
-import com.google.protobuf.ByteString;
 import io.opentelemetry.proto.common.v1.InstrumentationLibrary;
 import io.opentelemetry.proto.common.v1.KeyValue;
 import io.opentelemetry.proto.trace.v1.Span;
@@ -10,7 +9,6 @@ import sch.frog.opentelemetry.util.CollectionUtil;
 import sch.frog.opentelemetry.util.OpenTelemetryProtoUtil;
 
 import java.util.Collection;
-import java.util.List;
 
 public class HttpInstrumentationData extends AbstractInstrumentationData{
 
@@ -37,25 +35,25 @@ public class HttpInstrumentationData extends AbstractInstrumentationData{
     }
 
     @Override
-    public void build(ApplicationTrace belongTrace, String parentSpanId, TraceDataBuilder builder) {
-        String spanId = OpenTelemetryProtoUtil.genSpanId();
-        long startNanoTime = builder.getStartNanoTime(belongTrace);
-        Span span = Span.newBuilder()
-                .setSpanId(ByteString.copyFrom(OpenTelemetryProtoUtil.hexIdToBytes(spanId)))
-                .setKind(Span.SpanKind.SPAN_KIND_CLIENT)
-                .setTraceId(ByteString.copyFrom(OpenTelemetryProtoUtil.hexIdToBytes(builder.getTraceId())))
-                .setName(this.method + " " + this.httpUrl)
-                .addAllAttributes(this.getAttributes())
-                .setStartTimeUnixNano(startNanoTime + this.getStartOffset())
-                .setEndTimeUnixNano(startNanoTime + this.getEndOffset())
-                .setParentSpanId(ByteString.copyFrom(OpenTelemetryProtoUtil.hexIdToBytes(parentSpanId)))
-                .build();
-
-        builder.build(belongTrace, List.of(span), InstrumentationLibrary.newBuilder().setName("").setVersion("").build(), "");
-
+    protected void buildComplete(ApplicationTrace applicationTrace, String lastSpanId, TraceDataBuilder builder) {
         if(this.next != null){
-            builder.build(this.next, spanId);
+            builder.build(this.next, lastSpanId);
         }
+    }
+
+    @Override
+    protected InstrumentationLibrary getInstrumentationLibrary() {
+        return InstrumentationLibrary.newBuilder().setName("").setVersion("").build();
+    }
+
+    @Override
+    protected String mainSpanName() {
+        return this.method + " " + this.httpUrl;
+    }
+
+    @Override
+    protected Span.SpanKind mainSpanKind(ApplicationTrace applicationTrace, String parentSpanId, TraceDataBuilder builder) {
+        return Span.SpanKind.SPAN_KIND_CLIENT;
     }
 
     @Override
