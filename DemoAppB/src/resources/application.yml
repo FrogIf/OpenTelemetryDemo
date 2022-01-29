@@ -21,4 +21,4 @@ jaeger:
 
 frog:
   opentelemetry:
-    enable: false
+    enable: true

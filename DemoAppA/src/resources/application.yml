@@ -13,4 +13,4 @@ frog:
   appb:
     address: http://localhost:9092
   opentelemetry:
-    enable: false
+    enable: true
