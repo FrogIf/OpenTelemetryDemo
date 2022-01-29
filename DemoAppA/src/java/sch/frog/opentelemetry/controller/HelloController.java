@@ -43,6 +43,10 @@ public class HelloController {
         String url = appBAddress + "/hello";
         ResponseEntity<String> res = restTemplate.getForEntity(url, String.class);
         logger.info("call app b , url : {}, response : {}", url, res.getBody());
+
+        String hiUrl = appBAddress + "/hi";
+        ResponseEntity<String> resHi = restTemplate.getForEntity(hiUrl, String.class);
+        logger.info("call app b, url : {}, response : {}", hiUrl, resHi.getBody());
         return "hello open telemetry";
     }
 
